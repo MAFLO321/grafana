@@ -7,8 +7,10 @@ export function getTimescaleDBVersion() {
 }
 
 export function showTables() {
-  return `select quote_ident(table_name) as "table" from information_schema.tables
-    where quote_ident(table_schema) not in ('information_schema',
+  return `SELECT
+      CASE WHEN ${buildSchemaConstraint()} THEN quote_ident(table_name) ELSE quote_ident(table_schema) || '.' || quote_ident(table_name) END AS "table"
+    FROM information_schema.tables
+    WHERE quote_ident(table_schema) NOT IN ('information_schema',
                              'pg_catalog',
                              '_timescaledb_cache',
                              '_timescaledb_catalog',
@@ -16,7 +18,7 @@ export function showTables() {
                              '_timescaledb_config',
                              'timescaledb_information',
                              'timescaledb_experimental')
-      and ${buildSchemaConstraint()}`;
+    ORDER BY CASE WHEN ${buildSchemaConstraint()} THEN 0 ELSE 1 END, 1`;
 }
 
 export function getSchema(table: string) {
